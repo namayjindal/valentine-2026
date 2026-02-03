@@ -1,6 +1,76 @@
 import * as THREE from 'three';
 
 // ============================================
+// TEXT CONFIG - Edit all text content here!
+// ============================================
+const TEXT = {
+  // Loading screen
+  loader: 'loading...',
+
+  // Intro screen
+  intro: {
+    title: 'hey simonne',
+    subtitle: 'i planned us a perfect day.',
+    startButton: 'let\'s go'
+  },
+
+  // Scene content (in order: cafe → driving → cat → terrace → paneer)
+  scenes: {
+    cafe: {
+      text: 'our day starts at bombon.',
+      subtext: 'turkish eggs and you - my two favorite things.',
+      hint: 'click the coffee',
+      interaction: 'perfect warmth'
+    },
+    driving: {
+      text: 'then i drive you around in the afternoon sun.',
+      subtext: 'my little passenger princess.',
+      hint: 'click the car',
+      interaction: 'beep beep'
+    },
+    cat: {
+      text: 'we come home and there she is, sunbathing.',
+      subtext: 'she tolerates me now. i think.',
+      hint: 'click the cat',
+      interaction: 'purrrr'
+    },
+    terrace: {
+      text: 'uno on the terrace. no mercy.',
+      subtext: 'you cheat. i let you win anyway.',
+      hint: 'click the cards',
+      interaction: '+4. sorry not sorry.'
+    },
+    paneer: {
+      text: 'and we end with the best paneer chilly in pune.',
+      subtext: 'asia kitchen. still undefeated.',
+      hint: 'click the dish',
+      interaction: 'numbing good'
+    }
+  },
+
+  // Continue button
+  continueButton: 'continue',
+
+  // Finale screen
+  finale: {
+    question: 'that\'s our perfect day. will you be my valentine?',
+    yesButton: 'yes',
+    noButton: 'no',
+    noButtonAfter: 'okay fine, yes',
+    yesResponse: 'i knew you\'d say yes.<br><br>i love you, simonne.'
+  }
+};
+
+// Scene order (change this array to reorder scenes)
+const SCENE_ORDER = ['cafe', 'driving', 'cat', 'terrace', 'paneer'];
+
+// Build sceneData from config
+const sceneData = SCENE_ORDER.map(id => ({
+  id,
+  ...TEXT.scenes[id]
+}));
+
+// ============================================
 // APP STATE
 // ============================================
 const state = {
@@ -11,41 +81,6 @@ const state = {
   raycaster: new THREE.Raycaster(),
   hasInteracted: false
 };
-
-// Scene content - reordered for a day together
-// Morning cafe -> Afternoon drive -> Cat time -> Terrace uno -> Dinner
-const sceneData = [
-  {
-    id: 'cafe',
-    text: 'our day starts at bombon.',
-    subtext: 'turkish eggs and you - my two favorite things.',
-    hint: 'click the coffee'
-  },
-  {
-    id: 'driving',
-    text: 'then i drive you around in the afternoon sun.',
-    subtext: 'my little passenger princess.',
-    hint: 'click the car'
-  },
-  {
-    id: 'cat',
-    text: 'we come home and there she is, sunbathing.',
-    subtext: 'she tolerates me now. i think.',
-    hint: 'click the cat'
-  },
-  {
-    id: 'terrace',
-    text: 'uno on the terrace. no mercy.',
-    subtext: 'you cheat. i let you win anyway.',
-    hint: 'click the cards'
-  },
-  {
-    id: 'paneer',
-    text: 'and we end with the best paneer chilly in pune.',
-    subtext: 'asia kitchen. still undefeated.',
-    hint: 'click the dish'
-  }
-];
 
 // ============================================
 // DOM ELEMENTS
@@ -167,13 +202,13 @@ function handleInteraction(event) {
 function triggerCafeInteraction(animData) {
   state.hasInteracted = true;
   animData.steamActive = true;
-  showInteractionText('perfect warmth');
+  showInteractionText(TEXT.scenes.cafe.interaction);
 }
 
 function triggerCarInteraction(animData) {
   state.hasInteracted = true;
   animData.honk = true;
-  showInteractionText('beep beep');
+  showInteractionText(TEXT.scenes.driving.interaction);
 }
 
 function triggerCatInteraction(animData, scene) {
@@ -199,19 +234,19 @@ function triggerCatInteraction(animData, scene) {
     animData.hearts.push(heart);
   }
 
-  showInteractionText('purrrr');
+  showInteractionText(TEXT.scenes.cat.interaction);
 }
 
 function triggerTerraceInteraction(animData) {
   state.hasInteracted = true;
   animData.cardFlip = true;
-  showInteractionText('+4. sorry not sorry.');
+  showInteractionText(TEXT.scenes.terrace.interaction);
 }
 
 function triggerPaneerInteraction(animData) {
   state.hasInteracted = true;
   animData.dishGlow = true;
-  showInteractionText('numbing good');
+  showInteractionText(TEXT.scenes.paneer.interaction);
 }
 
 function showInteractionText(text) {
@@ -1877,7 +1912,7 @@ function nextScene() {
 function showFinale() {
   elements.sceneContainer.classList.remove('active');
   elements.finale.classList.add('active');
-  elements.finaleText.textContent = "that's our perfect day. will you be my valentine?";
+  elements.finaleText.textContent = TEXT.finale.question;
 }
 
 // ============================================
@@ -2056,11 +2091,11 @@ function startExperience() {
 
 function handleFinale(isYes) {
   if (isYes) {
-    elements.finaleText.innerHTML = "i knew you'd say yes.<br><br>i love you, simonne.";
+    elements.finaleText.innerHTML = TEXT.finale.yesResponse;
     elements.yesBtn.style.display = 'none';
     elements.noBtn.style.display = 'none';
   } else {
-    elements.noBtn.textContent = "okay fine, yes";
+    elements.noBtn.textContent = TEXT.finale.noButtonAfter;
     elements.noBtn.classList.remove('btn-no');
     elements.noBtn.classList.add('btn-yes');
     elements.noBtn.onclick = () => handleFinale(true);
