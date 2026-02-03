@@ -1,0 +1,262 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0a0a0a;
+  --text: #ffffff;
+  --text-muted: #888888;
+  --accent: #ff6b6b;
+  --accent-soft: rgba(255, 107, 107, 0.1);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow: hidden;
+  text-transform: lowercase;
+  letter-spacing: -0.02em;
+}
+
+#app {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+
+/* Screens */
+.screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+  z-index: 10;
+  background: var(--bg);
+}
+
+.screen.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Loader */
+.loader-content {
+  text-align: center;
+}
+
+.loader-content p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.loader-bar {
+  width: 200px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loader-progress {
+  width: 0%;
+  height: 100%;
+  background: var(--text);
+  transition: width 0.3s ease;
+}
+
+/* Intro */
+.intro-content {
+  text-align: center;
+  max-width: 400px;
+  padding: 2rem;
+}
+
+.intro-content h1 {
+  font-size: 2rem;
+  font-weight: 400;
+  margin-bottom: 1.5rem;
+}
+
+.intro-content p {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.intro-content p:last-of-type {
+  margin-bottom: 2.5rem;
+}
+
+/* Buttons */
+.btn {
+  font-family: inherit;
+  font-size: 0.875rem;
+  text-transform: lowercase;
+  letter-spacing: -0.01em;
+  padding: 0.875rem 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: var(--text);
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.btn-next {
+  position: absolute;
+  bottom: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.btn-yes {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.btn-yes:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn-no {
+  opacity: 0.5;
+}
+
+.btn-no:hover {
+  opacity: 1;
+}
+
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Scene container */
+#scene-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+#scene-container.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+#canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Scene UI */
+#scene-ui {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 3rem;
+}
+
+#scene-ui .btn {
+  pointer-events: auto;
+}
+
+.scene-text {
+  text-align: center;
+  max-width: 500px;
+  margin-bottom: 2rem;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.scene-text.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.scene-text p {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.scene-text .small {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+/* Finale */
+.finale-content {
+  text-align: center;
+  max-width: 450px;
+  padding: 2rem;
+}
+
+.finale-content h1 {
+  font-size: 1.75rem;
+  font-weight: 400;
+  margin-bottom: 1.5rem;
+}
+
+.finale-content p {
+  font-size: 1rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+}
+
+.finale-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .intro-content h1,
+  .finale-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .scene-text p {
+    font-size: 1rem;
+  }
+
+  #scene-ui {
+    padding: 2rem 1.5rem;
+  }
+}
