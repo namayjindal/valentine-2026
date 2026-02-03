@@ -6,7 +6,11 @@ import * as THREE from 'three';
 const state = {
   currentScene: 0,
   scenes: [],
-  isTransitioning: false
+  isTransitioning: false,
+  hasInteracted: false,
+  mouse: { x: 0, y: 0 },
+  raycaster: new THREE.Raycaster(),
+  mouseVec: new THREE.Vector2()
 };
 
 // Scene content - we'll fill in proper text later
@@ -14,27 +18,32 @@ const sceneData = [
   {
     id: 'driving',
     text: 'every time i come back, my favorite thing is driving you around.',
-    subtext: 'my little passenger princess.'
+    subtext: 'my little passenger princess.',
+    hint: 'move your mouse to look around'
   },
   {
     id: 'cat',
     text: 'and somehow, i always end up playing with your cat.',
-    subtext: 'she tolerates me now. i think.'
+    subtext: 'she tolerates me now. i think.',
+    hint: 'click on her to give pets'
   },
   {
     id: 'cafe',
     text: 'we hop from cafe to cafe, pretending we need more coffee.',
-    subtext: 'we just need more time.'
+    subtext: 'we just need more time.',
+    hint: 'click the coffee'
   },
   {
     id: 'terrace',
     text: 'those uno nights on the terrace...',
-    subtext: 'you cheat. i let you win anyway.'
+    subtext: 'you cheat. i let you win anyway.',
+    hint: 'draw a card'
   },
   {
     id: 'paneer',
     text: 'and our never-ending quest for the best paneer chilly.',
-    subtext: 'still searching. still eating.'
+    subtext: 'still searching. still eating.',
+    hint: 'click the dish'
   }
 ];
 
@@ -83,12 +92,239 @@ function initThree() {
   clock = new THREE.Clock();
 
   window.addEventListener('resize', onResize);
+  window.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('click', onClick);
+  window.addEventListener('touchstart', onTouch);
 }
 
 function onResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function onMouseMove(e) {
+  state.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  state.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+}
+
+function onClick(e) {
+  state.mouseVec.x = (e.clientX / window.innerWidth) * 2 - 1;
+  state.mouseVec.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  handleInteraction();
+}
+
+function onTouch(e) {
+  if (e.touches.length > 0) {
+    state.mouseVec.x = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
+    state.mouseVec.y = -(e.touches[0].clientY / window.innerHeight) * 2 + 1;
+    handleInteraction();
+  }
+}
+
+function handleInteraction() {
+  if (!currentSceneObj || state.hasInteracted) return;
+
+  const { scene, animData, index } = currentSceneObj;
+  state.raycaster.setFromCamera(state.mouseVec, camera);
+
+  switch (index) {
+    case 1: // Cat scene
+      if (animData.cat) {
+        const catIntersects = state.raycaster.intersectObject(animData.cat, true);
+        if (catIntersects.length > 0) {
+          triggerCatInteraction(animData);
+        }
+      }
+      break;
+
+    case 2: // Cafe scene
+      if (animData.cups) {
+        const cupIntersects = state.raycaster.intersectObjects(animData.cups, true);
+        if (cupIntersects.length > 0) {
+          triggerCafeInteraction(animData, scene);
+        }
+      }
+      break;
+
+    case 3: // Terrace scene
+      if (animData.deck) {
+        const deckIntersects = state.raycaster.intersectObject(animData.deck, true);
+        if (deckIntersects.length > 0) {
+          triggerTerraceInteraction(animData, scene);
+        }
+      }
+      break;
+
+    case 4: // Paneer scene
+      if (animData.dish) {
+        const dishIntersects = state.raycaster.intersectObject(animData.dish, true);
+        if (dishIntersects.length > 0) {
+          triggerPaneerInteraction(animData);
+        }
+      }
+      break;
+  }
+}
+
+// ============================================
+// INTERACTION HANDLERS
+// ============================================
+
+function triggerCatInteraction(animData) {
+  state.hasInteracted = true;
+
+  // Create floating hearts
+  const hearts = [];
+  for (let i = 0; i < 8; i++) {
+    const heart = createHeart();
+    heart.position.set(
+      animData.cat.position.x + (Math.random() - 0.5) * 1.5,
+      animData.cat.position.y + 0.5,
+      animData.cat.position.z + (Math.random() - 0.5) * 1.5
+    );
+    heart.userData.velocity = {
+      x: (Math.random() - 0.5) * 0.02,
+      y: 0.02 + Math.random() * 0.02,
+      z: (Math.random() - 0.5) * 0.02
+    };
+    heart.userData.life = 1;
+    currentSceneObj.scene.add(heart);
+    hearts.push(heart);
+  }
+  animData.hearts = hearts;
+  animData.catPurring = true;
+
+  // Update text
+  showInteractionText('*purrrrrr*');
+
+  // Show next button
+  setTimeout(() => {
+    elements.nextBtn.classList.remove('hidden');
+  }, 1500);
+}
+
+function createHeart() {
+  const shape = new THREE.Shape();
+  const x = 0, y = 0;
+  shape.moveTo(x, y);
+  shape.bezierCurveTo(x, y - 0.05, x - 0.1, y - 0.1, x - 0.15, y - 0.1);
+  shape.bezierCurveTo(x - 0.25, y - 0.1, x - 0.25, y + 0.05, x - 0.25, y + 0.05);
+  shape.bezierCurveTo(x - 0.25, y + 0.1, x - 0.15, y + 0.2, x, y + 0.25);
+  shape.bezierCurveTo(x + 0.15, y + 0.2, x + 0.25, y + 0.1, x + 0.25, y + 0.05);
+  shape.bezierCurveTo(x + 0.25, y + 0.05, x + 0.25, y - 0.1, x + 0.15, y - 0.1);
+  shape.bezierCurveTo(x + 0.1, y - 0.1, x, y - 0.05, x, y);
+
+  const geometry = new THREE.ShapeGeometry(shape);
+  const material = new THREE.MeshBasicMaterial({
+    color: 0xff6b6b,
+    side: THREE.DoubleSide,
+    transparent: true
+  });
+
+  const heart = new THREE.Mesh(geometry, material);
+  heart.scale.setScalar(0.5);
+  heart.rotation.z = Math.PI;
+  return heart;
+}
+
+function triggerCafeInteraction(animData, scene) {
+  state.hasInteracted = true;
+
+  // Create steam particles
+  const steamParticles = [];
+  for (let i = 0; i < 20; i++) {
+    const steam = new THREE.Mesh(
+      new THREE.SphereGeometry(0.03 + Math.random() * 0.02, 6, 6),
+      new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.4
+      })
+    );
+    const cupPos = animData.cups[0].position;
+    steam.position.set(
+      cupPos.x + (Math.random() - 0.5) * 0.1,
+      cupPos.y + 0.15,
+      cupPos.z + (Math.random() - 0.5) * 0.1
+    );
+    steam.userData.velocity = {
+      x: (Math.random() - 0.5) * 0.005,
+      y: 0.01 + Math.random() * 0.01,
+      z: (Math.random() - 0.5) * 0.005
+    };
+    steam.userData.life = 1;
+    scene.add(steam);
+    steamParticles.push(steam);
+  }
+  animData.steam = steamParticles;
+
+  showInteractionText('another cup? always.');
+
+  setTimeout(() => {
+    elements.nextBtn.classList.remove('hidden');
+  }, 1500);
+}
+
+function triggerTerraceInteraction(animData, scene) {
+  state.hasInteracted = true;
+
+  // Flip a card from the deck
+  const cardMessages = [
+    '+4... for my love for you',
+    'reverse! back to the start of us',
+    'skip... your turn to do dishes',
+    'wild card: i choose you'
+  ];
+
+  const message = cardMessages[Math.floor(Math.random() * cardMessages.length)];
+  const colors = [0xff4444, 0x44ff44, 0x4444ff, 0xffff44];
+
+  // Create the drawn card
+  const drawnCard = new THREE.Mesh(
+    new THREE.BoxGeometry(0.25, 0.02, 0.38),
+    createMaterial(colors[Math.floor(Math.random() * colors.length)])
+  );
+  drawnCard.position.copy(animData.deck.position);
+  drawnCard.position.y += 0.1;
+  scene.add(drawnCard);
+
+  animData.drawnCard = drawnCard;
+  animData.cardFlipping = true;
+  animData.cardFlipProgress = 0;
+
+  showInteractionText(message);
+
+  setTimeout(() => {
+    elements.nextBtn.classList.remove('hidden');
+  }, 2000);
+}
+
+function triggerPaneerInteraction(animData) {
+  state.hasInteracted = true;
+
+  // Make dish glow/pulse
+  animData.dishGlowing = true;
+
+  showInteractionText("this one's pretty good. but we should keep looking. for science.");
+
+  setTimeout(() => {
+    elements.nextBtn.classList.remove('hidden');
+  }, 1500);
+}
+
+function showInteractionText(text) {
+  const hint = document.querySelector('.hint');
+  if (hint) hint.remove();
+
+  const interactionEl = document.createElement('p');
+  interactionEl.className = 'interaction-text';
+  interactionEl.textContent = text;
+  elements.sceneText.appendChild(interactionEl);
+
+  setTimeout(() => {
+    interactionEl.classList.add('visible');
+  }, 100);
 }
 
 // ============================================
@@ -176,14 +412,16 @@ function createDrivingScene() {
     scene.add(light);
   }
 
-  // Camera setup
-  camera.position.set(8, 4, 12);
+  // Camera setup - store base position for parallax
+  const baseCameraPos = { x: 8, y: 4, z: 12 };
+  camera.position.set(baseCameraPos.x, baseCameraPos.y, baseCameraPos.z);
   camera.lookAt(car.position);
 
   // Animation data
   const animData = {
     car,
     time: 0,
+    baseCameraPos,
     roadLines: scene.children.filter(c => c.geometry?.parameters?.width === 0.2)
   };
 
@@ -386,7 +624,9 @@ function createCatScene() {
   const animData = {
     cat,
     toy,
-    time: 0
+    time: 0,
+    hearts: [],
+    catPurring: false
   };
 
   return { scene, animData };
@@ -456,6 +696,7 @@ function createCat() {
   const tail = new THREE.Mesh(tailGeo, blackMat);
   tail.position.set(0, 0.6, -0.8);
   tail.rotation.x = -0.5;
+  tail.name = 'tail';
   cat.add(tail);
 
   // Legs
@@ -540,11 +781,13 @@ function createCafeScene() {
   table.position.set(0, 0, 2);
   scene.add(table);
 
-  // Coffee cups on table
+  // Coffee cups on table - store references
+  const cups = [];
   [-0.4, 0.4].forEach(x => {
     const cup = createCoffeeCup();
     cup.position.set(x, 1.05, 2);
     scene.add(cup);
+    cups.push(cup);
   });
 
   // String lights
@@ -565,7 +808,9 @@ function createCafeScene() {
   camera.lookAt(0, 1, 0);
 
   const animData = {
-    time: 0
+    time: 0,
+    cups,
+    steam: []
   };
 
   return { scene, animData };
@@ -756,6 +1001,9 @@ function createTerraceScene() {
   cards.position.set(0, 0.65, 0);
   scene.add(cards);
 
+  // Get reference to deck
+  const deck = cards.children.find(c => c.geometry?.parameters?.height === 0.15);
+
   // Cushions/seating
   [-1.5, 1.5].forEach(x => {
     const cushion = new THREE.Mesh(
@@ -812,7 +1060,11 @@ function createTerraceScene() {
 
   const animData = {
     time: 0,
-    stars
+    stars,
+    deck,
+    drawnCard: null,
+    cardFlipping: false,
+    cardFlipProgress: 0
   };
 
   return { scene, animData };
@@ -937,7 +1189,9 @@ function createPaneerScene() {
 
   const animData = {
     time: 0,
-    neonLight
+    neonLight,
+    dish,
+    dishGlowing: false
   };
 
   return { scene, animData };
@@ -1034,22 +1288,30 @@ function loadScene(index) {
     return;
   }
 
+  state.hasInteracted = false;
+
   const { scene, animData } = sceneCreators[index]();
   currentSceneObj = { scene, animData, index };
 
   // Update text
   const data = sceneData[index];
-  elements.sceneText.innerHTML = `<p>${data.text}</p><p class="small">${data.subtext}</p>`;
+  elements.sceneText.innerHTML = `
+    <p>${data.text}</p>
+    <p class="small">${data.subtext}</p>
+    ${data.hint ? `<p class="hint">${data.hint}</p>` : ''}
+  `;
 
   // Fade in text after a moment
   setTimeout(() => {
     elements.sceneText.classList.add('visible');
   }, 500);
 
-  // Show next button after delay
-  setTimeout(() => {
-    elements.nextBtn.classList.remove('hidden');
-  }, 2000);
+  // For driving scene, show next button after delay (no click interaction)
+  if (index === 0) {
+    setTimeout(() => {
+      elements.nextBtn.classList.remove('hidden');
+    }, 3000);
+  }
 }
 
 function nextScene() {
@@ -1094,31 +1356,65 @@ function animate() {
         animData.car.position.y = Math.sin(animData.time * 2) * 0.02;
         animData.car.rotation.z = Math.sin(animData.time * 1.5) * 0.01;
       }
-      // Move camera slightly
-      camera.position.x = 8 + Math.sin(animData.time * 0.3) * 0.5;
+      // Parallax camera based on mouse
+      if (animData.baseCameraPos) {
+        camera.position.x = animData.baseCameraPos.x + state.mouse.x * 2;
+        camera.position.y = animData.baseCameraPos.y + state.mouse.y * 0.5;
+        camera.lookAt(animData.car.position);
+      }
       break;
 
     case 1: // Cat
       if (animData.cat) {
         // Cat breathing/idle animation
         animData.cat.scale.y = 1 + Math.sin(animData.time * 2) * 0.02;
-        // Tail wag
-        const tail = animData.cat.children.find(c =>
-          c.geometry?.parameters?.radiusTop === 0.08 &&
-          c.geometry?.parameters?.height === 1
-        );
+        // Tail wag - faster if purring
+        const tail = animData.cat.getObjectByName('tail');
         if (tail) {
-          tail.rotation.z = Math.sin(animData.time * 3) * 0.2;
+          const wagSpeed = animData.catPurring ? 8 : 3;
+          tail.rotation.z = Math.sin(animData.time * wagSpeed) * 0.3;
         }
       }
       if (animData.toy) {
         animData.toy.position.y = 0.2 + Math.sin(animData.time * 2) * 0.05;
+      }
+      // Animate hearts
+      if (animData.hearts && animData.hearts.length > 0) {
+        animData.hearts.forEach((heart, i) => {
+          heart.position.x += heart.userData.velocity.x;
+          heart.position.y += heart.userData.velocity.y;
+          heart.position.z += heart.userData.velocity.z;
+          heart.userData.life -= delta * 0.5;
+          heart.material.opacity = heart.userData.life;
+          heart.rotation.y = animData.time * 2;
+
+          if (heart.userData.life <= 0) {
+            scene.remove(heart);
+            animData.hearts.splice(i, 1);
+          }
+        });
       }
       break;
 
     case 2: // Cafe
       // Gentle camera sway
       camera.position.x = 5 + Math.sin(animData.time * 0.2) * 0.3;
+
+      // Animate steam
+      if (animData.steam && animData.steam.length > 0) {
+        animData.steam.forEach((particle, i) => {
+          particle.position.x += particle.userData.velocity.x;
+          particle.position.y += particle.userData.velocity.y;
+          particle.position.z += particle.userData.velocity.z;
+          particle.userData.life -= delta * 0.3;
+          particle.material.opacity = particle.userData.life * 0.4;
+
+          if (particle.userData.life <= 0) {
+            scene.remove(particle);
+            animData.steam.splice(i, 1);
+          }
+        });
+      }
       break;
 
     case 3: // Terrace
@@ -1126,12 +1422,31 @@ function animate() {
       if (animData.stars) {
         animData.stars.rotation.y = animData.time * 0.01;
       }
+      // Card flip animation
+      if (animData.cardFlipping && animData.drawnCard) {
+        animData.cardFlipProgress += delta * 2;
+        const progress = Math.min(animData.cardFlipProgress, 1);
+
+        // Rise and flip
+        animData.drawnCard.position.y = 0.75 + progress * 0.5;
+        animData.drawnCard.position.x = 0.4 - progress * 0.6;
+        animData.drawnCard.rotation.y = progress * Math.PI;
+
+        if (progress >= 1) {
+          animData.cardFlipping = false;
+        }
+      }
       break;
 
     case 4: // Paneer
       // Neon flicker
       if (animData.neonLight) {
         animData.neonLight.intensity = 1 + Math.sin(animData.time * 10) * 0.1;
+      }
+      // Dish glow pulse
+      if (animData.dishGlowing && animData.dish) {
+        const pulse = Math.sin(animData.time * 4) * 0.1 + 1;
+        animData.dish.scale.setScalar(pulse);
       }
       break;
   }

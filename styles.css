@@ -219,6 +219,28 @@ body {
   margin-top: 0.5rem;
 }
 
+.scene-text .hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 1.5rem;
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.scene-text .interaction-text {
+  font-size: 1rem;
+  color: var(--accent);
+  margin-top: 1rem;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.scene-text .interaction-text.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* Finale */
 .finale-content {
   text-align: center;
