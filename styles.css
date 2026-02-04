@@ -126,6 +126,14 @@ body {
   bottom: 3rem;
   left: 50%;
   transform: translateX(-50%);
+  color: #111111;
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.btn-next:hover {
+  background: #111111;
+  color: #ffffff;
+  border-color: #111111;
 }
 
 .btn-yes {
@@ -210,20 +218,21 @@ body {
 .scene-text p {
   font-size: 1.125rem;
   line-height: 1.7;
-  color: var(--text);
+  color: #111111;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
 }
 
 .scene-text .small {
   font-size: 0.875rem;
-  color: var(--text-muted);
+  color: #333333;
   margin-top: 0.5rem;
 }
 
 .scene-text .hint {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: #555555;
   margin-top: 1rem;
-  opacity: 0.5;
+  opacity: 0.7;
   font-style: italic;
 }
 
@@ -234,6 +243,7 @@ body {
   opacity: 0;
   transform: translateY(5px);
   transition: opacity 0.4s ease, transform 0.4s ease;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
 }
 
 .scene-text .interaction-text.visible {
