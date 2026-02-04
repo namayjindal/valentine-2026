@@ -61,7 +61,7 @@ const QUIZ = [
   {
     question: 'who does simonne love the most in the world?',
     options: ['kitty', 'mom', 'namay', 'timothee chalamet'],
-    correct: 0
+    correct: 1
   },
   {
     question: 'what is simonne\'s latest name for her kitty?',
