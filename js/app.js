@@ -7,38 +7,38 @@ const TEXT = {
   // Loading screen
   loader: 'loading...',
 
-  // Intro screen
+  // Intro screen (shown after quiz)
   intro: {
-    title: 'hey simonne',
-    subtitle: 'i planned us a perfect day.',
+    title: 'here\'s the plan.',
+    subtitle: 'this is what our valentine\'s day looks like.',
     startButton: 'let\'s go'
   },
 
   // Scene content (in order: cafe → driving → cat → terrace → paneer)
   scenes: {
     cafe: {
-      text: 'our day starts at bombon.',
-      subtext: 'turkish eggs and you - my two favorite things.',
+      text: 'we\'d start our day at bombon.',
+      subtext: 'have our little favorite turkish eggs.',
       hint: 'tap the window'
     },
     driving: {
-      text: 'then i drive you around in the afternoon sun.',
-      subtext: 'my little passenger princess.'
+      text: 'then i\'d drive you around in the afternoon sun.',
+      subtext: 'and take you home.'
     },
     cat: {
-      text: 'we come home and there she is, sunbathing.',
-      subtext: 'she tolerates me now. i think.',
-      hint: 'click the cat',
-      interaction: 'purrrr'
+      text: 'then we\'d play with your cat.',
+      subtext: 'i think she likes me now. and i think i like her more even though i\'m allergic to her. but i swear i\'ll keep taking allegra just to be around you and be around her.',
+      hint: 'click the cat'
     },
     terrace: {
-      text: 'uno on the terrace. no mercy.',
-      subtext: '+10. sorry not sorry.',
+      text: 'then we\'d sit on the terrace.',
+      subtext: 'uno. no mercy. and i swear we do this time around.',
       hint: 'click the cards'
     },
     paneer: {
-      text: 'and we end with the best paneer chilly in pune.',
-      subtext: 'asia kitchen. still undefeated.'
+      text: 'and finally, dinner at asia kitchen.',
+      subtext: 'the numbing paneer. because holy fucking shit that\'s incredible.',
+      hint: 'and maybe get high from the excessive capsaicin from the peppers.'
     }
   },
 
@@ -47,13 +47,39 @@ const TEXT = {
 
   // Finale screen
   finale: {
-    question: 'that\'s our perfect day. will you be my valentine?',
+    question: 'does that sound like a plan? will you be my valentine?',
     yesButton: 'yes',
     noButton: 'no',
     noButtonAfter: 'okay fine, yes',
     yesResponse: 'i knew you\'d say yes.<br><br>i love you, simonne.'
   }
 };
+
+// ============================================
+// QUIZ CONFIG
+// ============================================
+const QUIZ = [
+  {
+    question: 'who does simonne love the most in the world?',
+    options: ['kitty', 'mom', 'namay', 'timothee chalamet'],
+    correct: 0
+  },
+  {
+    question: 'what is simonne\'s latest name for her kitty?',
+    options: ['chunoo munoo', 'billu', 'mango', 'bhenji'],
+    correct: 2
+  },
+  {
+    question: 'BIG UPDATE - where does simonne work right now?',
+    options: ['still at oie and co.', 'joined her friends at flunkt', 'finally started a brownie baking cloud kitchen', 'she\'s unemployed lol'],
+    correct: 3
+  },
+  {
+    question: 'where are you most likely to find simonne on a thursday evening?',
+    options: ['bntr rooftop chilling with her guava mead', 'kuai kitchen for unlimited sushi', 'playing at home with kitty', 'at home doing movie night with namay'],
+    correct: 1
+  }
+];
 
 // Scene order (change this array to reorder scenes)
 const SCENE_ORDER = ['cafe', 'driving', 'cat', 'terrace', 'paneer'];
@@ -82,6 +108,15 @@ const state = {
 const elements = {
   loader: document.getElementById('loader'),
   loaderProgress: document.querySelector('.loader-progress'),
+  quizIntro: document.getElementById('quiz-intro'),
+  quizStartBtn: document.getElementById('quiz-start-btn'),
+  quiz: document.getElementById('quiz'),
+  quizCounter: document.getElementById('quiz-counter'),
+  quizQuestion: document.getElementById('quiz-question'),
+  quizOptions: document.getElementById('quiz-options'),
+  quizFail: document.getElementById('quiz-fail'),
+  quizPass: document.getElementById('quiz-pass'),
+  quizPassBtn: document.getElementById('quiz-pass-btn'),
   intro: document.getElementById('intro'),
   startBtn: document.getElementById('start-btn'),
   sceneContainer: document.getElementById('scene-container'),
@@ -93,6 +128,62 @@ const elements = {
   yesBtn: document.getElementById('yes-btn'),
   noBtn: document.getElementById('no-btn')
 };
+
+// ============================================
+// QUIZ LOGIC
+// ============================================
+let currentQuizQuestion = 0;
+
+function showQuizIntro() {
+  elements.loader.classList.remove('active');
+  elements.quizIntro.classList.add('active');
+}
+
+function startQuiz() {
+  elements.quizIntro.classList.remove('active');
+  elements.quiz.classList.add('active');
+  currentQuizQuestion = 0;
+  showQuizQuestion();
+}
+
+function showQuizQuestion() {
+  const q = QUIZ[currentQuizQuestion];
+  elements.quizCounter.textContent = `${currentQuizQuestion + 1} / ${QUIZ.length}`;
+  elements.quizQuestion.textContent = q.question;
+
+  elements.quizOptions.innerHTML = '';
+  q.options.forEach((option, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.textContent = option;
+    btn.addEventListener('click', () => handleQuizAnswer(i));
+    elements.quizOptions.appendChild(btn);
+  });
+}
+
+function handleQuizAnswer(index) {
+  const q = QUIZ[currentQuizQuestion];
+  if (index === q.correct) {
+    // Correct answer
+    currentQuizQuestion++;
+    if (currentQuizQuestion >= QUIZ.length) {
+      // Passed all questions
+      elements.quiz.classList.remove('active');
+      elements.quizPass.classList.add('active');
+    } else {
+      showQuizQuestion();
+    }
+  } else {
+    // Wrong answer - dead end
+    elements.quiz.classList.remove('active');
+    elements.quizFail.classList.add('active');
+  }
+}
+
+function quizPassContinue() {
+  elements.quizPass.classList.remove('active');
+  elements.intro.classList.add('active');
+}
 
 // ============================================
 // THREE.JS SETUP
@@ -437,68 +528,108 @@ function createCafeWindow() {
   hDivider.position.set(0, 2.5, 0);
   windowGroup.add(hDivider);
 
-  // Window glass (frosted/tinted - will clear on tap)
+  // Window glass (fully frosted - will clear on tap)
   const glassMat = new THREE.MeshStandardMaterial({
-    color: 0xc5e8d8,
+    color: 0xb8d8c8,
     transparent: true,
-    opacity: 0.55,
-    roughness: 0.3
+    opacity: 0.85,
+    roughness: 0.6
   });
   const glass = new THREE.Mesh(new THREE.PlaneGeometry(5, 3), glassMat);
   glass.position.set(0, 2, -0.05);
   windowGroup.add(glass);
 
-  // Outside view - sky backdrop (initially dim, brightens on reveal)
-  const skyMat = new THREE.MeshBasicMaterial({ color: 0x6a9ab5 });
+  // Outside view - sky backdrop (starts dark/grey, becomes bright blue)
+  const skyMat = new THREE.MeshBasicMaterial({ color: 0x445566 });
   const skyPlane = new THREE.Mesh(
-    new THREE.PlaneGeometry(12, 6),
+    new THREE.PlaneGeometry(12, 8),
     skyMat
   );
-  skyPlane.position.set(0, 3, -4);
+  skyPlane.position.set(0, 3.5, -5);
   windowGroup.add(skyPlane);
 
-  // Street/sidewalk visible through window
-  const outsideGround = new THREE.Mesh(
-    new THREE.PlaneGeometry(12, 4),
-    createMaterial(0x888880)
+  // Green landscape/hills (starts dark, brightens on reveal)
+  const hillMat = new THREE.MeshBasicMaterial({ color: 0x1a2a1a, transparent: true, opacity: 1 });
+  const hill1 = new THREE.Mesh(
+    new THREE.SphereGeometry(3, 12, 12),
+    hillMat
   );
-  outsideGround.rotation.x = -Math.PI / 2;
-  outsideGround.position.set(0, -0.1, -3);
-  windowGroup.add(outsideGround);
+  hill1.position.set(-2, -0.5, -4);
+  hill1.scale.set(2, 0.6, 1);
+  windowGroup.add(hill1);
 
-  // Trees visible through window
+  const hillMat2 = new THREE.MeshBasicMaterial({ color: 0x1a2a1a, transparent: true, opacity: 1 });
+  const hill2 = new THREE.Mesh(
+    new THREE.SphereGeometry(3, 12, 12),
+    hillMat2
+  );
+  hill2.position.set(2, -0.8, -4.5);
+  hill2.scale.set(1.8, 0.5, 1);
+  windowGroup.add(hill2);
+
+  const hillMat3 = new THREE.MeshBasicMaterial({ color: 0x1a2a1a, transparent: true, opacity: 1 });
+  const hill3 = new THREE.Mesh(
+    new THREE.SphereGeometry(4, 12, 12),
+    hillMat3
+  );
+  hill3.position.set(0, -1.5, -3.5);
+  hill3.scale.set(2.5, 0.4, 1);
+  windowGroup.add(hill3);
+
+  // Trees visible through window (start dark)
   const outsideTrees = [];
-  for (let i = 0; i < 4; i++) {
+  const treeMatDark = createMaterial(0x1a2a1a);
+  for (let i = 0; i < 5; i++) {
     const tree = createSimpleTree();
-    tree.position.set(-3 + i * 2.2 + Math.random() * 0.3, 0, -2.5);
-    tree.scale.setScalar(0.5 + Math.random() * 0.25);
+    tree.position.set(-4 + i * 2 + Math.random() * 0.3, 0, -3);
+    tree.scale.setScalar(0.4 + Math.random() * 0.2);
     windowGroup.add(tree);
     outsideTrees.push(tree);
   }
 
   // Sun (hidden initially, appears on reveal)
-  const sun = new THREE.Mesh(
-    new THREE.SphereGeometry(0.6, 12, 12),
-    new THREE.MeshBasicMaterial({ color: 0xffdd44, transparent: true, opacity: 0 })
+  const sunGlowMat = new THREE.MeshBasicMaterial({ color: 0xffee88, transparent: true, opacity: 0 });
+  const sunGlow = new THREE.Mesh(
+    new THREE.SphereGeometry(1.2, 16, 16),
+    sunGlowMat
   );
-  sun.position.set(2, 4, -3.5);
-  windowGroup.add(sun);
+  sunGlow.position.set(2.5, 4.5, -4.5);
+  windowGroup.add(sunGlow);
 
-  // Clouds (hidden initially)
+  const sunCoreMat = new THREE.MeshBasicMaterial({ color: 0xffdd44, transparent: true, opacity: 0 });
+  const sunCore = new THREE.Mesh(
+    new THREE.SphereGeometry(0.5, 12, 12),
+    sunCoreMat
+  );
+  sunCore.position.set(2.5, 4.5, -4.4);
+  windowGroup.add(sunCore);
+
+  // Clouds (hidden initially, multiple puffs per cloud for volume)
   const outsideClouds = [];
-  [[-1.5, 4.2, -3.2], [1, 3.8, -3.4], [3, 4.5, -3]].forEach(([x, y, z]) => {
-    const cloud = new THREE.Mesh(
-      new THREE.SphereGeometry(0.4, 8, 8),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 })
-    );
-    cloud.position.set(x, y, z);
-    cloud.scale.set(1.5, 0.6, 0.8);
-    windowGroup.add(cloud);
-    outsideClouds.push(cloud);
+  const cloudPositions = [
+    { center: [-2, 4.5, -4], puffs: [[-0.3, 0, 0], [0.3, 0.1, 0], [0, 0.15, 0], [-0.5, -0.05, 0], [0.5, 0.05, 0]] },
+    { center: [0.5, 4, -4.2], puffs: [[-0.2, 0, 0], [0.2, 0.05, 0], [0, 0.1, 0], [0.4, -0.03, 0]] },
+    { center: [3.5, 4.8, -4.1], puffs: [[-0.3, 0, 0], [0.3, 0.08, 0], [0, 0.12, 0]] }
+  ];
+
+  cloudPositions.forEach(({ center, puffs }) => {
+    puffs.forEach(([px, py, pz]) => {
+      const puff = new THREE.Mesh(
+        new THREE.SphereGeometry(0.35 + Math.random() * 0.15, 8, 8),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 })
+      );
+      puff.position.set(center[0] + px, center[1] + py, center[2] + pz);
+      puff.scale.set(1.4, 0.6, 0.8);
+      windowGroup.add(puff);
+      outsideClouds.push(puff);
+    });
   });
 
   // Store references for animation
-  windowGroup.userData = { glass, glassMat, skyMat, sun, outsideClouds };
+  windowGroup.userData = {
+    glass, glassMat, skyMat, sunGlow, sunGlowMat, sunCore, sunCoreMat,
+    outsideClouds, hillMat, hillMat2, hillMat3, outsideTrees
+  };
 
   // Window sill (interior ledge)
   const sill = new THREE.Mesh(
@@ -2358,23 +2489,47 @@ function animate() {
     case 0: // Cafe
       // Window reveal animation
       if (animData.windowReveal && animData.revealProgress < 1) {
-        animData.revealProgress = Math.min(animData.revealProgress + delta * 0.8, 1);
+        animData.revealProgress = Math.min(animData.revealProgress + delta * 0.5, 1);
         const t = animData.revealProgress;
+        // Smooth easing
+        const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
         const wd = animData.windowFrame.userData;
 
-        // Glass fades to very transparent
-        wd.glassMat.opacity = 0.55 - t * 0.5;
-        wd.glassMat.roughness = 0.3 - t * 0.25;
+        // Glass goes from fully frosted to nearly clear
+        wd.glassMat.opacity = 0.85 - ease * 0.8;
+        wd.glassMat.roughness = 0.6 - ease * 0.55;
+        wd.glassMat.color.lerp(new THREE.Color(0xeef8ff), ease * 0.1);
 
-        // Sky brightens
-        wd.skyMat.color.lerp(new THREE.Color(0x87ceeb), t * 0.05);
+        // Sky goes from dark grey to bright blue
+        wd.skyMat.color.lerp(new THREE.Color(0x87ceeb), ease * 0.08);
 
-        // Sun fades in
-        wd.sun.material.opacity = t;
+        // Hills go from dark to vibrant green
+        wd.hillMat.color.lerp(new THREE.Color(0x4a9a3a), ease * 0.08);
+        wd.hillMat2.color.lerp(new THREE.Color(0x3d8a2d), ease * 0.08);
+        wd.hillMat3.color.lerp(new THREE.Color(0x5aaa4a), ease * 0.08);
+
+        // Sun fades in with glow
+        wd.sunGlowMat.opacity = ease * 0.4;
+        wd.sunCoreMat.opacity = ease;
 
         // Clouds fade in
         wd.outsideClouds.forEach(c => {
-          c.material.opacity = t * 0.8;
+          c.material.opacity = ease * 0.85;
+        });
+
+        // Trees brighten
+        wd.outsideTrees.forEach(tree => {
+          tree.children.forEach(child => {
+            if (child.material && child.material.color) {
+              if (child.position.y > 1) {
+                // Foliage
+                child.material.color.lerp(new THREE.Color(0x3d7a3d), ease * 0.08);
+              } else {
+                // Trunk
+                child.material.color.lerp(new THREE.Color(0x4a3728), ease * 0.08);
+              }
+            }
+          });
         });
       }
       // Gentle camera sway
@@ -2448,25 +2603,24 @@ async function init() {
     if (progress >= 100) {
       progress = 100;
       clearInterval(loadingInterval);
-      setTimeout(showIntro, 300);
+      setTimeout(showQuizIntro, 300);
     }
     elements.loaderProgress.style.width = `${progress}%`;
   }, 150);
 
   initThree();
 
-  // Event listeners
+  // Quiz event listeners
+  elements.quizStartBtn.addEventListener('click', startQuiz);
+  elements.quizPassBtn.addEventListener('click', quizPassContinue);
+
+  // Scene event listeners
   elements.startBtn.addEventListener('click', startExperience);
   elements.nextBtn.addEventListener('click', nextScene);
   elements.yesBtn.addEventListener('click', () => handleFinale(true));
   elements.noBtn.addEventListener('click', () => handleFinale(false));
 
   animate();
-}
-
-function showIntro() {
-  elements.loader.classList.remove('active');
-  elements.intro.classList.add('active');
 }
 
 function startExperience() {
