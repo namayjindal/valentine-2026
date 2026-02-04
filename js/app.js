@@ -19,8 +19,7 @@ const TEXT = {
     cafe: {
       text: 'our day starts at bombon.',
       subtext: 'turkish eggs and you - my two favorite things.',
-      hint: 'click the coffee',
-      interaction: 'perfect warmth'
+      hint: 'tap the window'
     },
     driving: {
       text: 'then i drive you around in the afternoon sun.',
@@ -151,11 +150,11 @@ function handleInteraction(event) {
 
   // Scene-specific interactions (cafe, cat, terrace only)
   switch (index) {
-    case 0: // Cafe - click coffee
-      if (animData.cups) {
-        const hits = state.raycaster.intersectObjects(animData.cups, true);
+    case 0: // Cafe - tap window
+      if (animData.windowGlass) {
+        const hits = state.raycaster.intersectObjects([animData.windowGlass], true);
         if (hits.length > 0) {
-          triggerCafeInteraction(animData);
+          triggerCafeInteraction(animData, scene);
         }
       }
       break;
@@ -178,9 +177,10 @@ function handleInteraction(event) {
   }
 }
 
-function triggerCafeInteraction(animData) {
+function triggerCafeInteraction(animData, scene) {
   state.hasInteracted = true;
-  animData.steamActive = true;
+  animData.windowReveal = true;
+  animData.revealProgress = 0;
 }
 
 function triggerCatInteraction(animData, scene) {
@@ -309,7 +309,7 @@ function createCafeScene() {
   scene.add(seating);
 
   // Big window on the back wall (looking outside)
-  const windowFrame = createCafeWindow();
+  const { group: windowFrame, glass: windowGlass } = createCafeWindow();
   windowFrame.position.set(0, 0, -4.8);
   scene.add(windowFrame);
 
@@ -346,9 +346,10 @@ function createCafeScene() {
 
   const animData = {
     time: 0,
-    cups,
-    steamParticles: [],
-    steamActive: false
+    windowGlass: windowGlass,
+    windowFrame: windowFrame,
+    windowReveal: false,
+    revealProgress: 0
   };
 
   return { scene, animData };
@@ -436,21 +437,22 @@ function createCafeWindow() {
   hDivider.position.set(0, 2.5, 0);
   windowGroup.add(hDivider);
 
-  // Window glass (slightly tinted)
+  // Window glass (frosted/tinted - will clear on tap)
   const glassMat = new THREE.MeshStandardMaterial({
     color: 0xc5e8d8,
     transparent: true,
-    opacity: 0.2,
-    roughness: 0.05
+    opacity: 0.55,
+    roughness: 0.3
   });
   const glass = new THREE.Mesh(new THREE.PlaneGeometry(5, 3), glassMat);
   glass.position.set(0, 2, -0.05);
   windowGroup.add(glass);
 
-  // Outside view - sky backdrop
+  // Outside view - sky backdrop (initially dim, brightens on reveal)
+  const skyMat = new THREE.MeshBasicMaterial({ color: 0x6a9ab5 });
   const skyPlane = new THREE.Mesh(
     new THREE.PlaneGeometry(12, 6),
-    new THREE.MeshBasicMaterial({ color: 0x87ceeb })
+    skyMat
   );
   skyPlane.position.set(0, 3, -4);
   windowGroup.add(skyPlane);
@@ -465,12 +467,38 @@ function createCafeWindow() {
   windowGroup.add(outsideGround);
 
   // Trees visible through window
+  const outsideTrees = [];
   for (let i = 0; i < 4; i++) {
     const tree = createSimpleTree();
     tree.position.set(-3 + i * 2.2 + Math.random() * 0.3, 0, -2.5);
     tree.scale.setScalar(0.5 + Math.random() * 0.25);
     windowGroup.add(tree);
+    outsideTrees.push(tree);
   }
+
+  // Sun (hidden initially, appears on reveal)
+  const sun = new THREE.Mesh(
+    new THREE.SphereGeometry(0.6, 12, 12),
+    new THREE.MeshBasicMaterial({ color: 0xffdd44, transparent: true, opacity: 0 })
+  );
+  sun.position.set(2, 4, -3.5);
+  windowGroup.add(sun);
+
+  // Clouds (hidden initially)
+  const outsideClouds = [];
+  [[-1.5, 4.2, -3.2], [1, 3.8, -3.4], [3, 4.5, -3]].forEach(([x, y, z]) => {
+    const cloud = new THREE.Mesh(
+      new THREE.SphereGeometry(0.4, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 })
+    );
+    cloud.position.set(x, y, z);
+    cloud.scale.set(1.5, 0.6, 0.8);
+    windowGroup.add(cloud);
+    outsideClouds.push(cloud);
+  });
+
+  // Store references for animation
+  windowGroup.userData = { glass, glassMat, skyMat, sun, outsideClouds };
 
   // Window sill (interior ledge)
   const sill = new THREE.Mesh(
@@ -498,7 +526,7 @@ function createCafeWindow() {
   sillPlant.position.set(1.5, 0.5, 0.15);
   windowGroup.add(sillPlant);
 
-  return windowGroup;
+  return { group: windowGroup, glass };
 }
 
 function createSimpleTree() {
@@ -2328,41 +2356,25 @@ function animate() {
   // Scene-specific animations
   switch (currentSceneObj.index) {
     case 0: // Cafe
-      // Steam animation when activated
-      if (animData.steamActive && animData.cups.length > 0) {
-        if (Math.random() < 0.15) {
-          const cup = animData.cups[Math.floor(Math.random() * animData.cups.length)];
-          const steam = new THREE.Mesh(
-            new THREE.SphereGeometry(0.02, 6, 6),
-            new THREE.MeshBasicMaterial({
-              color: 0xffffff,
-              transparent: true,
-              opacity: 0.6
-            })
-          );
-          steam.position.copy(cup.position);
-          steam.position.y += 0.1;
-          steam.userData.velocity = new THREE.Vector3(
-            (Math.random() - 0.5) * 0.01,
-            0.02,
-            (Math.random() - 0.5) * 0.01
-          );
-          steam.userData.life = 1;
-          scene.add(steam);
-          animData.steamParticles.push(steam);
-        }
+      // Window reveal animation
+      if (animData.windowReveal && animData.revealProgress < 1) {
+        animData.revealProgress = Math.min(animData.revealProgress + delta * 0.8, 1);
+        const t = animData.revealProgress;
+        const wd = animData.windowFrame.userData;
 
-        // Update steam particles
-        animData.steamParticles = animData.steamParticles.filter(p => {
-          p.position.add(p.userData.velocity);
-          p.userData.life -= delta * 0.8;
-          p.material.opacity = p.userData.life * 0.6;
-          p.scale.setScalar(1 + (1 - p.userData.life) * 2);
-          if (p.userData.life <= 0) {
-            scene.remove(p);
-            return false;
-          }
-          return true;
+        // Glass fades to very transparent
+        wd.glassMat.opacity = 0.55 - t * 0.5;
+        wd.glassMat.roughness = 0.3 - t * 0.25;
+
+        // Sky brightens
+        wd.skyMat.color.lerp(new THREE.Color(0x87ceeb), t * 0.05);
+
+        // Sun fades in
+        wd.sun.material.opacity = t;
+
+        // Clouds fade in
+        wd.outsideClouds.forEach(c => {
+          c.material.opacity = t * 0.8;
         });
       }
       // Gentle camera sway
