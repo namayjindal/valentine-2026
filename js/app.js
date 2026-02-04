@@ -18,8 +18,7 @@ const TEXT = {
   scenes: {
     cafe: {
       text: 'we\'d start our day at bombon.',
-      subtext: 'have our little favorite turkish eggs.',
-      hint: 'tap the window'
+      subtext: 'have our little favorite turkish eggs.'
     },
     driving: {
       text: 'then i\'d drive you around in the afternoon sun.',
