@@ -287,7 +287,7 @@ function createMaterial(color) {
   });
 }
 
-// Scene 1: Cafe (Bombon - Turkish eggs, cozy pillows, big windows)
+// Scene 1: Cafe (Bombon - Turkish eggs, cozy pillows, indoor with window)
 function createCafeScene() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf5e6d3); // Warm cream background
@@ -302,22 +302,60 @@ function createCafeScene() {
   sunLight.castShadow = true;
   scene.add(sunLight);
 
-  // Floor
-  const floorGeo = new THREE.PlaneGeometry(30, 30);
+  // Floor (warm wood)
+  const floorGeo = new THREE.PlaneGeometry(14, 14);
   const floorMat = createMaterial(0x8b7355);
   const floor = new THREE.Mesh(floorGeo, floorMat);
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
   scene.add(floor);
 
+  // Ceiling
+  const ceiling = new THREE.Mesh(
+    new THREE.PlaneGeometry(14, 14),
+    createMaterial(0xf0e8d8)
+  );
+  ceiling.rotation.x = Math.PI / 2;
+  ceiling.position.y = 4;
+  scene.add(ceiling);
+
+  // Walls (warm cafe color)
+  const wallMat = createMaterial(0xe8d8c4);
+
+  // Back wall (with window cut out handled by the window function)
+  const backWall = new THREE.Mesh(
+    new THREE.PlaneGeometry(14, 4),
+    wallMat
+  );
+  backWall.position.set(0, 2, -5);
+  scene.add(backWall);
+
+  // Left wall
+  const leftWall = new THREE.Mesh(
+    new THREE.PlaneGeometry(14, 4),
+    wallMat
+  );
+  leftWall.position.set(-7, 2, 0);
+  leftWall.rotation.y = Math.PI / 2;
+  scene.add(leftWall);
+
+  // Right wall
+  const rightWall = new THREE.Mesh(
+    new THREE.PlaneGeometry(14, 4),
+    wallMat
+  );
+  rightWall.position.set(7, 2, 0);
+  rightWall.rotation.y = -Math.PI / 2;
+  scene.add(rightWall);
+
   // Cozy seating area (like Bombon)
   const seating = createCozySeating();
   seating.position.set(0, 0, 0);
   scene.add(seating);
 
-  // Big window behind
+  // Big window on the back wall (looking outside)
   const windowFrame = createCafeWindow();
-  windowFrame.position.set(0, 0, -3);
+  windowFrame.position.set(0, 0, -4.8);
   scene.add(windowFrame);
 
   // Coffee table with Turkish eggs setup
@@ -333,6 +371,20 @@ function createCafeScene() {
     scene.add(cup);
     cups.push(cup);
   });
+
+  // Side table with record player and vinyls
+  const recordTable = createRecordPlayerTable();
+  recordTable.position.set(-4.5, 0, -1);
+  scene.add(recordTable);
+
+  // Hanging pendant light
+  const pendant1 = createPendantLight();
+  pendant1.position.set(0, 3.8, 1);
+  scene.add(pendant1);
+
+  const pendant2 = createPendantLight();
+  pendant2.position.set(-4.5, 3.8, -1);
+  scene.add(pendant2);
 
   camera.position.set(3, 2, 5);
   camera.lookAt(0, 0.8, 0);
@@ -401,47 +453,95 @@ function createCafeWindow() {
   const frameMat = createMaterial(0x1a1a1a);
 
   // Main frame
-  const frameTop = new THREE.Mesh(new THREE.BoxGeometry(5, 0.1, 0.1), frameMat);
+  const frameTop = new THREE.Mesh(new THREE.BoxGeometry(5, 0.12, 0.15), frameMat);
   frameTop.position.set(0, 3.5, 0);
   windowGroup.add(frameTop);
 
-  const frameBottom = new THREE.Mesh(new THREE.BoxGeometry(5, 0.1, 0.1), frameMat);
+  const frameBottom = new THREE.Mesh(new THREE.BoxGeometry(5, 0.12, 0.15), frameMat);
   frameBottom.position.set(0, 0.5, 0);
   windowGroup.add(frameBottom);
 
-  const frameLeft = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3, 0.1), frameMat);
+  const frameLeft = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3, 0.15), frameMat);
   frameLeft.position.set(-2.5, 2, 0);
   windowGroup.add(frameLeft);
 
-  const frameRight = new THREE.Mesh(new THREE.BoxGeometry(0.1, 3, 0.1), frameMat);
+  const frameRight = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3, 0.15), frameMat);
   frameRight.position.set(2.5, 2, 0);
   windowGroup.add(frameRight);
 
   // Vertical dividers
   [-1.25, 0, 1.25].forEach(x => {
-    const divider = new THREE.Mesh(new THREE.BoxGeometry(0.05, 3, 0.05), frameMat);
+    const divider = new THREE.Mesh(new THREE.BoxGeometry(0.06, 3, 0.08), frameMat);
     divider.position.set(x, 2, 0);
     windowGroup.add(divider);
   });
 
+  // Horizontal divider
+  const hDivider = new THREE.Mesh(new THREE.BoxGeometry(5, 0.06, 0.08), frameMat);
+  hDivider.position.set(0, 2.5, 0);
+  windowGroup.add(hDivider);
+
   // Window glass (slightly tinted)
   const glassMat = new THREE.MeshStandardMaterial({
-    color: 0xc5e6d3,
+    color: 0xc5e8d8,
     transparent: true,
-    opacity: 0.3,
-    roughness: 0.1
+    opacity: 0.2,
+    roughness: 0.05
   });
   const glass = new THREE.Mesh(new THREE.PlaneGeometry(5, 3), glassMat);
   glass.position.set(0, 2, -0.05);
   windowGroup.add(glass);
 
+  // Outside view - sky backdrop
+  const skyPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(12, 6),
+    new THREE.MeshBasicMaterial({ color: 0x87ceeb })
+  );
+  skyPlane.position.set(0, 3, -4);
+  windowGroup.add(skyPlane);
+
+  // Street/sidewalk visible through window
+  const outsideGround = new THREE.Mesh(
+    new THREE.PlaneGeometry(12, 4),
+    createMaterial(0x888880)
+  );
+  outsideGround.rotation.x = -Math.PI / 2;
+  outsideGround.position.set(0, -0.1, -3);
+  windowGroup.add(outsideGround);
+
   // Trees visible through window
   for (let i = 0; i < 4; i++) {
     const tree = createSimpleTree();
-    tree.position.set(-3 + i * 2 + Math.random(), 0, -2);
-    tree.scale.setScalar(0.6 + Math.random() * 0.3);
+    tree.position.set(-3 + i * 2.2 + Math.random() * 0.3, 0, -2.5);
+    tree.scale.setScalar(0.5 + Math.random() * 0.25);
     windowGroup.add(tree);
   }
+
+  // Window sill (interior ledge)
+  const sill = new THREE.Mesh(
+    new THREE.BoxGeometry(5.2, 0.08, 0.35),
+    createMaterial(0x3d3530)
+  );
+  sill.position.set(0, 0.46, 0.15);
+  windowGroup.add(sill);
+
+  // Small potted plant on window sill
+  const sillPlant = new THREE.Group();
+  const pot = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.06, 0.1, 8),
+    createMaterial(0x8b4513)
+  );
+  pot.position.y = 0.05;
+  sillPlant.add(pot);
+  const leaves = new THREE.Mesh(
+    new THREE.SphereGeometry(0.1, 6, 6),
+    createMaterial(0x3d8a3d)
+  );
+  leaves.position.y = 0.15;
+  leaves.scale.set(0.8, 1.2, 0.8);
+  sillPlant.add(leaves);
+  sillPlant.position.set(1.5, 0.5, 0.15);
+  windowGroup.add(sillPlant);
 
   return windowGroup;
 }
@@ -561,11 +661,183 @@ function createCoffeeCup() {
   return cup;
 }
 
-// Scene 2: Driving (Sunny afternoon, Honda City)
+function createRecordPlayerTable() {
+  const group = new THREE.Group();
+
+  // Small side table (wooden, round)
+  const tableTop = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.65, 0.65, 0.05, 12),
+    createMaterial(0x5a4a3a)
+  );
+  tableTop.position.y = 0.7;
+  tableTop.castShadow = true;
+  group.add(tableTop);
+
+  // Table leg
+  const tableLeg = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.1, 0.7, 8),
+    createMaterial(0x3d3530)
+  );
+  tableLeg.position.y = 0.35;
+  group.add(tableLeg);
+
+  // Table base
+  const tableBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.35, 0.35, 0.05, 12),
+    createMaterial(0x3d3530)
+  );
+  tableBase.position.y = 0.025;
+  group.add(tableBase);
+
+  // Record player body
+  const playerBody = new THREE.Mesh(
+    new THREE.BoxGeometry(0.55, 0.08, 0.45),
+    createMaterial(0x2a2018)
+  );
+  playerBody.position.set(0, 0.77, 0);
+  playerBody.castShadow = true;
+  group.add(playerBody);
+
+  // Turntable platter
+  const platter = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.18, 0.18, 0.02, 16),
+    createMaterial(0x1a1a1a)
+  );
+  platter.position.set(-0.05, 0.82, 0);
+  group.add(platter);
+
+  // Vinyl record on platter
+  const vinyl = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.16, 0.16, 0.005, 16),
+    createMaterial(0x111111)
+  );
+  vinyl.position.set(-0.05, 0.835, 0);
+  group.add(vinyl);
+
+  // Record label (center)
+  const label = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.04, 0.04, 0.006, 12),
+    createMaterial(0xcc3333)
+  );
+  label.position.set(-0.05, 0.838, 0);
+  group.add(label);
+
+  // Tonearm
+  const armBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.025, 0.025, 0.04, 8),
+    createMaterial(0xc0c0c0)
+  );
+  armBase.position.set(0.18, 0.83, -0.12);
+  group.add(armBase);
+
+  const arm = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.008, 0.008, 0.25, 6),
+    createMaterial(0xc0c0c0)
+  );
+  arm.position.set(0.08, 0.85, -0.04);
+  arm.rotation.z = 0.15;
+  arm.rotation.y = 0.6;
+  group.add(arm);
+
+  // Vinyl collection (leaning against the wall nearby)
+  const vinylRack = createVinylCollection();
+  vinylRack.position.set(0.2, 0, -1.5);
+  group.add(vinylRack);
+
+  return group;
+}
+
+function createVinylCollection() {
+  const rack = new THREE.Group();
+
+  // Small wooden crate/shelf
+  const crateMat = createMaterial(0x6a5a4a);
+  const crateBack = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 0.6, 0.05),
+    crateMat
+  );
+  crateBack.position.set(0, 0.3, -0.2);
+  rack.add(crateBack);
+
+  const crateBottom = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 0.05, 0.45),
+    crateMat
+  );
+  crateBottom.position.set(0, 0.025, 0);
+  rack.add(crateBottom);
+
+  const crateLeft = new THREE.Mesh(
+    new THREE.BoxGeometry(0.05, 0.6, 0.45),
+    crateMat
+  );
+  crateLeft.position.set(-0.5, 0.3, 0);
+  rack.add(crateLeft);
+
+  const crateRight = new THREE.Mesh(
+    new THREE.BoxGeometry(0.05, 0.6, 0.45),
+    crateMat
+  );
+  crateRight.position.set(0.5, 0.3, 0);
+  rack.add(crateRight);
+
+  // Vinyl records (leaning, different sleeve colors)
+  const sleeveColors = [
+    0x1a1a1a, 0xcc4444, 0x4466aa, 0xf0e0c0, 0x44aa66,
+    0x8844aa, 0xe8a030, 0x2a2a5a, 0xcc7744, 0x3a6a5a
+  ];
+
+  for (let i = 0; i < sleeveColors.length; i++) {
+    const sleeve = new THREE.Mesh(
+      new THREE.BoxGeometry(0.02, 0.45, 0.42),
+      createMaterial(sleeveColors[i])
+    );
+    sleeve.position.set(-0.38 + i * 0.08, 0.28, 0);
+    sleeve.rotation.z = -0.05 + Math.random() * 0.06;
+    rack.add(sleeve);
+  }
+
+  return rack;
+}
+
+function createPendantLight() {
+  const pendant = new THREE.Group();
+
+  // Cord
+  const cord = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.01, 0.01, 0.6, 6),
+    createMaterial(0x1a1a1a)
+  );
+  cord.position.y = 0.3;
+  pendant.add(cord);
+
+  // Shade (warm Edison-style bulb look)
+  const shade = new THREE.Mesh(
+    new THREE.SphereGeometry(0.15, 12, 12),
+    new THREE.MeshStandardMaterial({
+      color: 0xffcc66,
+      emissive: 0xffaa33,
+      emissiveIntensity: 0.3,
+      roughness: 0.3,
+      transparent: true,
+      opacity: 0.9
+    })
+  );
+  shade.position.y = -0.05;
+  pendant.add(shade);
+
+  // Warm point light
+  const light = new THREE.PointLight(0xffcc66, 0.4, 6);
+  light.position.y = -0.05;
+  pendant.add(light);
+
+  return pendant;
+}
+
+// Scene 2: Driving (Sunny afternoon, Honda City parked on a city street)
 function createDrivingScene() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x87ceeb); // Sunny blue sky
-  scene.fog = new THREE.Fog(0x87ceeb, 30, 100);
+  scene.fog = new THREE.Fog(0x87ceeb, 40, 120);
 
   // Bright sunlight
   const ambient = new THREE.AmbientLight(0xffffff, 0.6);
@@ -576,25 +848,25 @@ function createDrivingScene() {
   sunLight.castShadow = true;
   scene.add(sunLight);
 
-  // Ground
-  const groundGeo = new THREE.PlaneGeometry(200, 200);
-  const groundMat = createMaterial(0x7caa5a); // Grass green
+  // Ground (concrete/pavement color)
+  const groundGeo = new THREE.PlaneGeometry(100, 100);
+  const groundMat = createMaterial(0x8a8a7a);
   const ground = new THREE.Mesh(groundGeo, groundMat);
   ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
   scene.add(ground);
 
   // Road
-  const roadGeo = new THREE.PlaneGeometry(8, 200);
+  const roadGeo = new THREE.PlaneGeometry(8, 60);
   const roadMat = createMaterial(0x3a3a3a);
   const road = new THREE.Mesh(roadGeo, roadMat);
   road.rotation.x = -Math.PI / 2;
-  road.position.y = 0.01;
+  road.position.set(0, 0.01, 0);
   scene.add(road);
 
   // Road lines
-  for (let i = -100; i < 100; i += 8) {
-    const lineGeo = new THREE.PlaneGeometry(0.15, 3);
+  for (let i = -30; i < 30; i += 6) {
+    const lineGeo = new THREE.PlaneGeometry(0.15, 2.5);
     const lineMat = createMaterial(0xffffff);
     const line = new THREE.Mesh(lineGeo, lineMat);
     line.rotation.x = -Math.PI / 2;
@@ -602,23 +874,73 @@ function createDrivingScene() {
     scene.add(line);
   }
 
-  // Honda City (white sedan)
+  // Sidewalks on both sides
+  [-4.5, 4.5].forEach(x => {
+    const sidewalk = new THREE.Mesh(
+      new THREE.BoxGeometry(2, 0.12, 60),
+      createMaterial(0xb0a898)
+    );
+    sidewalk.position.set(x, 0.06, 0);
+    scene.add(sidewalk);
+
+    // Curb
+    const curb = new THREE.Mesh(
+      new THREE.BoxGeometry(0.2, 0.15, 60),
+      createMaterial(0x999990)
+    );
+    curb.position.set(x < 0 ? x + 1 : x - 1, 0.08, 0);
+    scene.add(curb);
+  });
+
+  // 4-story building (main, behind car)
+  const building = createCityBuilding(4);
+  building.position.set(-8, 0, -2);
+  scene.add(building);
+
+  // Smaller buildings beside it
+  const building2 = createCityBuilding(3);
+  building2.position.set(-8, 0, -12);
+  scene.add(building2);
+
+  const building3 = createCityBuilding(2);
+  building3.position.set(-8, 0, 8);
+  scene.add(building3);
+
+  // Buildings on the other side of the road
+  const building4 = createCityBuilding(3);
+  building4.position.set(9, 0, -5);
+  scene.add(building4);
+
+  const building5 = createCityBuilding(5);
+  building5.position.set(9, 0, 7);
+  scene.add(building5);
+
+  // Honda City (white sedan, parked by the curb)
   const car = createHondaCity();
-  car.position.set(0, 0, 0);
+  car.position.set(-2.5, 0, 2);
+  car.rotation.y = 0; // Facing along the road
   scene.add(car);
 
-  // Trees along the road (green, leafy for sunny day)
-  for (let i = 0; i < 30; i++) {
-    const side = i % 2 === 0 ? 1 : -1;
+  // Trees along sidewalk
+  const treePositions = [
+    [-5, 0, -8], [-5, 0, 0], [-5, 0, 8],
+    [5.5, 0, -6], [5.5, 0, 3], [5.5, 0, 12]
+  ];
+  treePositions.forEach(([x, y, z]) => {
     const tree = createSunnyTree();
-    tree.position.set(
-      side * (8 + Math.random() * 10),
-      0,
-      -50 + i * 6 + Math.random() * 2
-    );
-    tree.scale.setScalar(0.8 + Math.random() * 0.4);
+    tree.position.set(x, y, z);
+    tree.scale.setScalar(0.7 + Math.random() * 0.3);
     scene.add(tree);
-  }
+  });
+
+  // Street lamp
+  const lamp = createStreetLamp();
+  lamp.position.set(-5.2, 0, 4);
+  scene.add(lamp);
+
+  const lamp2 = createStreetLamp();
+  lamp2.position.set(5.2, 0, -3);
+  scene.add(lamp2);
 
   // Sun in the sky
   const sun = new THREE.Mesh(
@@ -629,18 +951,18 @@ function createDrivingScene() {
   scene.add(sun);
 
   // Clouds
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 6; i++) {
     const cloud = createCloud();
     cloud.position.set(
-      (Math.random() - 0.5) * 80,
-      15 + Math.random() * 10,
-      -30 + Math.random() * 30
+      (Math.random() - 0.5) * 60,
+      18 + Math.random() * 8,
+      -20 + Math.random() * 20
     );
     cloud.scale.setScalar(1 + Math.random() * 1.5);
     scene.add(cloud);
   }
 
-  camera.position.set(8, 4, 12);
+  camera.position.set(6, 4, 10);
   camera.lookAt(car.position);
 
   const animData = {
@@ -650,6 +972,125 @@ function createDrivingScene() {
   };
 
   return { scene, animData };
+}
+
+function createCityBuilding(floors) {
+  const building = new THREE.Group();
+
+  const floorHeight = 3;
+  const totalHeight = floors * floorHeight;
+  const width = 6;
+  const depth = 5;
+
+  // Main structure
+  const bodyColors = [0xd4c8b8, 0xc9bda8, 0xbfb49e, 0xd0c4b0, 0xccc0aa];
+  const bodyColor = bodyColors[Math.floor(Math.random() * bodyColors.length)];
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(width, totalHeight, depth),
+    createMaterial(bodyColor)
+  );
+  body.position.y = totalHeight / 2;
+  body.castShadow = true;
+  building.add(body);
+
+  // Windows (grid on front face)
+  const windowMat = createMaterial(0x4a6080);
+  const windowFrameMat = createMaterial(0x888880);
+  for (let f = 0; f < floors; f++) {
+    for (let w = 0; w < 3; w++) {
+      // Window pane
+      const win = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1.4, 0.1),
+        windowMat
+      );
+      win.position.set(
+        -1.8 + w * 1.8,
+        f * floorHeight + 2,
+        depth / 2 + 0.01
+      );
+      building.add(win);
+
+      // Window frame
+      const frame = new THREE.Mesh(
+        new THREE.BoxGeometry(1.15, 1.55, 0.08),
+        windowFrameMat
+      );
+      frame.position.set(
+        -1.8 + w * 1.8,
+        f * floorHeight + 2,
+        depth / 2 - 0.01
+      );
+      building.add(frame);
+
+      // Window sill
+      const sill = new THREE.Mesh(
+        new THREE.BoxGeometry(1.3, 0.1, 0.25),
+        windowFrameMat
+      );
+      sill.position.set(
+        -1.8 + w * 1.8,
+        f * floorHeight + 1.25,
+        depth / 2 + 0.1
+      );
+      building.add(sill);
+    }
+  }
+
+  // Door on ground floor
+  const door = new THREE.Mesh(
+    new THREE.BoxGeometry(1.2, 2.2, 0.1),
+    createMaterial(0x3a2a1a)
+  );
+  door.position.set(0, 1.1, depth / 2 + 0.02);
+  building.add(door);
+
+  // Roof ledge
+  const ledge = new THREE.Mesh(
+    new THREE.BoxGeometry(width + 0.3, 0.2, depth + 0.3),
+    createMaterial(0x666660)
+  );
+  ledge.position.y = totalHeight + 0.1;
+  building.add(ledge);
+
+  return building;
+}
+
+function createStreetLamp() {
+  const lamp = new THREE.Group();
+
+  // Pole
+  const pole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.08, 4.5, 8),
+    createMaterial(0x3a3a3a)
+  );
+  pole.position.y = 2.25;
+  lamp.add(pole);
+
+  // Arm
+  const arm = new THREE.Mesh(
+    new THREE.BoxGeometry(0.8, 0.06, 0.06),
+    createMaterial(0x3a3a3a)
+  );
+  arm.position.set(0.4, 4.4, 0);
+  lamp.add(arm);
+
+  // Light housing
+  const housing = new THREE.Mesh(
+    new THREE.BoxGeometry(0.3, 0.1, 0.2),
+    createMaterial(0x444444)
+  );
+  housing.position.set(0.8, 4.35, 0);
+  lamp.add(housing);
+
+  // Light (subtle glow, it's daytime)
+  const bulb = new THREE.Mesh(
+    new THREE.SphereGeometry(0.08, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0xfff8e0 })
+  );
+  bulb.position.set(0.8, 4.28, 0);
+  lamp.add(bulb);
+
+  return lamp;
 }
 
 function createHondaCity() {
