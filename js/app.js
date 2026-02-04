@@ -24,9 +24,7 @@ const TEXT = {
     },
     driving: {
       text: 'then i drive you around in the afternoon sun.',
-      subtext: 'my little passenger princess.',
-      hint: 'click the car',
-      interaction: 'beep beep'
+      subtext: 'my little passenger princess.'
     },
     cat: {
       text: 'we come home and there she is, sunbathing.',
@@ -36,15 +34,12 @@ const TEXT = {
     },
     terrace: {
       text: 'uno on the terrace. no mercy.',
-      subtext: 'you cheat. i let you win anyway.',
-      hint: 'click the cards',
-      interaction: '+4. sorry not sorry.'
+      subtext: '+10. sorry not sorry.',
+      hint: 'click the cards'
     },
     paneer: {
       text: 'and we end with the best paneer chilly in pune.',
-      subtext: 'asia kitchen. still undefeated.',
-      hint: 'click the dish',
-      interaction: 'numbing good'
+      subtext: 'asia kitchen. still undefeated.'
     }
   },
 
@@ -154,21 +149,13 @@ function handleInteraction(event) {
   const { scene, animData, index } = currentSceneObj;
   state.raycaster.setFromCamera(state.mouseVec, camera);
 
-  // Scene-specific interactions
+  // Scene-specific interactions (cafe, cat, terrace only)
   switch (index) {
     case 0: // Cafe - click coffee
       if (animData.cups) {
         const hits = state.raycaster.intersectObjects(animData.cups, true);
         if (hits.length > 0) {
           triggerCafeInteraction(animData);
-        }
-      }
-      break;
-    case 1: // Driving - click car
-      if (animData.car) {
-        const hits = state.raycaster.intersectObjects([animData.car], true);
-        if (hits.length > 0) {
-          triggerCarInteraction(animData);
         }
       }
       break;
@@ -188,27 +175,12 @@ function handleInteraction(event) {
         }
       }
       break;
-    case 4: // Paneer - click dish
-      if (animData.dish) {
-        const hits = state.raycaster.intersectObjects([animData.dish], true);
-        if (hits.length > 0) {
-          triggerPaneerInteraction(animData);
-        }
-      }
-      break;
   }
 }
 
 function triggerCafeInteraction(animData) {
   state.hasInteracted = true;
   animData.steamActive = true;
-  showInteractionText(TEXT.scenes.cafe.interaction);
-}
-
-function triggerCarInteraction(animData) {
-  state.hasInteracted = true;
-  animData.honk = true;
-  showInteractionText(TEXT.scenes.driving.interaction);
 }
 
 function triggerCatInteraction(animData, scene) {
@@ -233,28 +205,11 @@ function triggerCatInteraction(animData, scene) {
     scene.add(heart);
     animData.hearts.push(heart);
   }
-
-  showInteractionText(TEXT.scenes.cat.interaction);
 }
 
 function triggerTerraceInteraction(animData) {
   state.hasInteracted = true;
   animData.cardFlip = true;
-  showInteractionText(TEXT.scenes.terrace.interaction);
-}
-
-function triggerPaneerInteraction(animData) {
-  state.hasInteracted = true;
-  animData.dishGlow = true;
-  showInteractionText(TEXT.scenes.paneer.interaction);
-}
-
-function showInteractionText(text) {
-  const interactionEl = document.createElement('p');
-  interactionEl.className = 'interaction-text';
-  interactionEl.textContent = text;
-  elements.sceneText.appendChild(interactionEl);
-  setTimeout(() => interactionEl.classList.add('visible'), 50);
 }
 
 function createHeart() {
@@ -962,8 +917,8 @@ function createDrivingScene() {
     scene.add(cloud);
   }
 
-  camera.position.set(6, 4, 10);
-  camera.lookAt(car.position);
+  camera.position.set(5, 3, 12);
+  camera.lookAt(-1, 0.8, 0);
 
   const animData = {
     car,
@@ -2322,7 +2277,7 @@ function loadScene(index) {
   elements.sceneText.innerHTML = `
     <p>${data.text}</p>
     <p class="small">${data.subtext}</p>
-    <p class="hint">${data.hint}</p>
+    ${data.hint ? `<p class="hint">${data.hint}</p>` : ''}
   `;
 
   // Fade in text after a moment
@@ -2415,22 +2370,12 @@ function animate() {
       break;
 
     case 1: // Driving
-      // Gentle car bobbing (driving on road)
+      // Gentle car bobbing (parked, subtle idle)
       if (animData.car) {
-        animData.car.position.y = Math.sin(animData.time * 3) * 0.015;
-        animData.car.rotation.z = Math.sin(animData.time * 2) * 0.008;
+        animData.car.position.y = Math.sin(animData.time * 2) * 0.008;
       }
-      // Camera follows slightly
-      camera.position.x = 8 + Math.sin(animData.time * 0.3) * 0.5;
-
-      // Honk effect
-      if (animData.honk) {
-        animData.car.position.z = Math.sin(animData.time * 20) * 0.02;
-        setTimeout(() => {
-          if (animData.car) animData.car.position.z = 0;
-        }, 300);
-        animData.honk = false;
-      }
+      // Gentle camera sway
+      camera.position.x = 5 + Math.sin(animData.time * 0.2) * 0.3;
       break;
 
     case 2: // Cat
@@ -2473,18 +2418,6 @@ function animate() {
       break;
 
     case 4: // Paneer
-      // Dish glow effect
-      if (animData.dishGlow && animData.dish) {
-        animData.glowIntensity = 0.5 + Math.sin(animData.time * 3) * 0.3;
-        // Find the oil mesh and pulse its emissive
-        const oil = animData.dish.children.find(c =>
-          c.geometry?.parameters?.radiusTop === 0.48
-        );
-        if (oil && oil.material) {
-          oil.material.emissive = new THREE.Color(0x441100);
-          oil.material.emissiveIntensity = animData.glowIntensity;
-        }
-      }
       break;
   }
 
