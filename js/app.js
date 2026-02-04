@@ -1031,20 +1031,20 @@ function createCowCat() {
     }
   });
 
-  // Tail (black, curled)
-  const tailGeo = new THREE.CylinderGeometry(0.06, 0.04, 0.8, 6);
+  // Tail (black, curled along the ground)
+  const tailGeo = new THREE.CylinderGeometry(0.04, 0.06, 0.8, 6);
   const tail = new THREE.Mesh(tailGeo, blackMat);
-  tail.position.set(0.3, 0.35, -0.9);
-  tail.rotation.x = 0.5;
+  tail.position.set(0.2, 0.2, -0.9);
+  tail.rotation.x = 1.3;
   tail.rotation.z = 0.3;
   cat.add(tail);
 
   // Tail tip curl
   const tailTip = new THREE.Mesh(
-    new THREE.SphereGeometry(0.06, 6, 6),
+    new THREE.SphereGeometry(0.05, 6, 6),
     blackMat
   );
-  tailTip.position.set(0.45, 0.55, -1.1);
+  tailTip.position.set(0.35, 0.15, -1.25);
   cat.add(tailTip);
 
   // Paws (white with some black)
